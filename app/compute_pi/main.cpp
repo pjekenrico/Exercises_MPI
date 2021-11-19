@@ -1,41 +1,85 @@
 #include <iostream>
 #include <math.h>
 #include <array>
+#include <mpi.h>
+
+#include "funcs.h"
 
 using namespace std;
 
-double myArctan(const double x, const int n){
-    double s = x;
-    for (int i = 2; i < n; i++){
-        if (i % 2 == 1)
-            s += pow(x, 2*i-1)/(2*i-1);
-        else
-            s -= pow(x, 2*i-1)/(2*i-1);
-    }
-    return s;
-}
-
-double zeta0(const int n){
-
-    double s = 1.0;
-    double tmp;
-    for(int i = 2; i < n; i++){
-        tmp = 1./i;
-        s += tmp*tmp;
-    }
-        
-
-    return sqrt(6*s);
-}
-
-double mach0(const int n){
-    double a = myArctan(0.2, n);
-    double b = myArctan(1./239., n);
-    return 4*(4*a - b);
-}
-
 int main(int argc, char **argv){
 
+    // Initialize MPI
+    int n_procs, rank=0;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
+
+      // Handle input arguments
+    if (argc < 2)
+    {
+        if (rank == 0)
+        {
+            cout << "Please provide a number of total evaluations.\n" << endl;
+        }
+        exit(1);
+    }
+
+  // Retrieve nb of points and make it a multiple of n_procs
+  int n = atoi(argv[1]);
+  n += (n_procs - n%n_procs);
+
+    // Printings
+    if (rank == 0)
+    {
+      cout << "# Number of procs:  " << n_procs << endl;
+      cout << "# Number of iterations: " << n << endl;
+    }
+
+    int n_per_proc = n / n_procs;
+    int* numbers_of_proc = new int[n_per_proc];
+    int* numbers_to_eval;
+
+    // Start timing
+    double time_start;
+    if (rank == 0)
+    {
+        time_start = MPI_Wtime();
+
+        numbers_to_eval = new int[n];
+
+        for (int i = 0; i < n; i++)
+        {
+            numbers_to_eval[i] = i + 1;
+        }
+    }
+    
+    MPI_Scatter(numbers_to_eval, n_per_proc, MPI_INT, numbers_of_proc, n_per_proc, MPI_INT, 0, MPI_COMM_WORLD);
+
+    double partial_zeta = zeta1(numbers_of_proc, n_per_proc);
+    double partial_mach = mach1(numbers_of_proc, n_per_proc);
+
+    double pi_zeta=0.0;
+    double pi_mach=0.0;
+
+    MPI_Reduce(&partial_zeta, &pi_zeta, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&partial_mach, &pi_mach, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    for (int i=0; i<n_per_proc; i++)
+    {
+        cout << "From rank: " << rank << ": " << numbers_of_proc[i] << "\n";
+    }
+
+    if (rank==0)
+    {
+        cout << "Computing pi with n = " << n << " on " << n_procs << " processors." << endl;
+        cout << "Result with the Riemann formula (zeta0): pi = " << pi_zeta;
+        cout << "\nResult with the Machin formula (mach0): pi = " << pi_mach << endl;
+    }
+
+    MPI_Finalize();
+
+    /*
     if (argc == 2){
         const int n = stoi(argv[1]);
         cout << "Computing pi with n = " << n << endl;
@@ -46,15 +90,15 @@ int main(int argc, char **argv){
     }
     
     // Convergence study
+    
     uint n = 2;
     cout << "\nConvergence study" << endl;
     cout << "N\terr(Riemann)\terr(Machin)" << endl;
-
     for(int i = 0; i < 10; i++){
         cout << n << "\t";
         cout << fabs( M_PI - zeta0(n) ) << "\t";
         cout << fabs( M_PI - mach0(n) ) << endl;
         n *= 2;
     }
-    
+    */
 }
