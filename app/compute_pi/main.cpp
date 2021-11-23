@@ -74,11 +74,11 @@ int main(int argc, char **argv){
     {
         // double duration = MPI_Wtime() - time_start;
         const double pi = 4.0*atan(1.0);
-        cout << "Computing pi with n = " << n << " on " << n_procs << " processors." << endl;
+        cout << "# Computing pi with n = " << n << " on " << n_procs << " processors." << endl;
         cout << setprecision(12);
-        cout << "Result with the Riemann formula (zeta0): pi = " << pi_zeta;
+        cout << "# Result with the Riemann formula (zeta0): pi = " << pi_zeta;
         cout << ", error = " << fabs(pi_zeta - pi);
-        cout << "\nResult with the Machin formula (mach0): pi = " << pi_mach;
+        cout << "\n# Result with the Machin formula (mach0): pi = " << pi_mach;
         cout << ", error = " << fabs(pi_mach - pi) << endl;
     }
 
