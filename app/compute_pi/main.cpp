@@ -2,6 +2,7 @@
 #include <math.h>
 #include <array>
 #include <mpi.h>
+#include <iomanip>
 
 #include "funcs.h"
 
@@ -25,9 +26,11 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-  // Retrieve nb of points and make it a multiple of n_procs
-  int n = atoi(argv[1]);
-  n += (n_procs - n%n_procs);
+    // Retrieve nb of points and make it a multiple of n_procs
+    int n = atoi(argv[1]);
+
+    if (n%n_procs != 0)
+        n += (n_procs - n%n_procs);
 
     // Printings
     if (rank == 0)
@@ -65,16 +68,18 @@ int main(int argc, char **argv){
     MPI_Reduce(&partial_zeta, &pi_zeta, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&partial_mach, &pi_mach, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    for (int i=0; i<n_per_proc; i++)
-    {
-        cout << "From rank: " << rank << ": " << numbers_of_proc[i] << "\n";
-    }
+    pi_zeta = sqrt(pi_zeta);
 
     if (rank==0)
     {
+        // double duration = MPI_Wtime() - time_start;
+        const double pi = 4.0*atan(1.0);
         cout << "Computing pi with n = " << n << " on " << n_procs << " processors." << endl;
+        cout << setprecision(12);
         cout << "Result with the Riemann formula (zeta0): pi = " << pi_zeta;
-        cout << "\nResult with the Machin formula (mach0): pi = " << pi_mach << endl;
+        cout << ", error = " << fabs(pi_zeta - pi);
+        cout << "\nResult with the Machin formula (mach0): pi = " << pi_mach;
+        cout << ", error = " << fabs(pi_mach - pi) << endl;
     }
 
     MPI_Finalize();

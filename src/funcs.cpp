@@ -30,7 +30,7 @@ double mach0(const int n){
 }
 
 double myArctan_formpi(int* numbers, const double x, const int n){
-    double s = x;
+    double s = 0.0;
     for (int i = 0; i < n; i++){
         if (numbers[i] % 2 == 1)
             s += pow(x, 2*numbers[i]-1)/(2*numbers[i]-1);
@@ -42,13 +42,13 @@ double myArctan_formpi(int* numbers, const double x, const int n){
 
 double zeta1(int* numbers, const int n){
 
-    double s = 1.0;
+    double s = 0.0;
     double tmp;
     for(int i = 0; i < n; i++){
         tmp = 1./numbers[i];
         s += tmp*tmp;
     }
-    return sqrt(6*s);
+    return 6*s;
 }
 
 double mach1(int* numbers, const int n){
